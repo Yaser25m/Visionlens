@@ -12,8 +12,22 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
-from decouple import config
-import dj_database_url
+
+# Try to import decouple, fallback to os.getenv if not available
+try:
+    from decouple import config
+except ImportError:
+    def config(key, default=None, cast=None):
+        value = os.getenv(key, default)
+        if cast and value is not None:
+            return cast(value)
+        return value
+
+# Try to import dj_database_url, fallback if not available
+try:
+    import dj_database_url
+except ImportError:
+    dj_database_url = None
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
