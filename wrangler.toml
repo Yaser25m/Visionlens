@@ -1,0 +1,21 @@
+name = "visionlens"
+compatibility_date = "2023-12-01"
+
+[build]
+command = "pip install -r requirements_final.txt && python manage.py collectstatic --noinput"
+cwd = "."
+
+[build.upload]
+format = "service-worker"
+
+[[build.upload.rules]]
+type = "ESModule"
+globs = ["**/*.js"]
+
+[env.production]
+name = "visionlens-production"
+
+[env.production.vars]
+DJANGO_SETTINGS_MODULE = "visionlens_store.settings"
+DEBUG = "False"
+ALLOWED_HOSTS = "1477d897.visionlens1.pages.dev,visionlens1.pages.dev"
