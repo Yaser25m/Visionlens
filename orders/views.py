@@ -141,8 +141,79 @@ class RemoveFromCartView(LoginRequiredMixin, View):
 class CheckoutView(LoginRequiredMixin, View):
     """صفحة الدفع"""
     def get(self, request):
-        # سيتم تنفيذها لاحقاً
-        return render(request, 'orders/checkout.html')
+        # التحقق من وجود سلة تسوق
+        try:
+            cart = Cart.objects.get(user=request.user)
+            cart_items = cart.items.select_related('product', 'product__brand').all()
+
+            if not cart_items:
+                messages.warning(request, 'سلة التسوق فارغة')
+                return redirect('orders:cart')
+
+        except Cart.DoesNotExist:
+            messages.warning(request, 'سلة التسوق فارغة')
+            return redirect('orders:cart')
+
+        context = {
+            'cart_items': cart_items,
+            'cart': cart,
+        }
+        return render(request, 'orders/checkout.html', context)
+
+    def post(self, request):
+        """إنشاء الطلب"""
+        try:
+            # التحقق من وجود سلة تسوق
+            cart = Cart.objects.get(user=request.user)
+            cart_items = cart.items.select_related('product').all()
+
+            if not cart_items:
+                messages.error(request, 'سلة التسوق فارغة')
+                return redirect('orders:cart')
+
+            # إنشاء الطلب
+            order = Order.objects.create(
+                user=request.user,
+                shipping_name=request.POST.get('shipping_name'),
+                shipping_phone=request.POST.get('shipping_phone'),
+                shipping_address=request.POST.get('shipping_address'),
+                shipping_city=request.POST.get('shipping_city'),
+                shipping_postal_code=request.POST.get('shipping_postal_code', ''),
+                subtotal=cart.total_price,
+                shipping_cost=0,  # شحن مجاني
+                tax_amount=0,     # بدون ضريبة
+                total_amount=cart.total_price,
+                notes=request.POST.get('notes', ''),
+                status='confirmed'  # تأكيد الطلب مباشرة
+            )
+
+            # إنشاء عناصر الطلب
+            for cart_item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=cart_item.product,
+                    quantity=cart_item.quantity,
+                    price=cart_item.product.get_price,
+                    total=cart_item.total_price
+                )
+
+                # تقليل المخزون
+                product = cart_item.product
+                product.stock_quantity -= cart_item.quantity
+                product.save()
+
+            # حذف السلة بعد إنشاء الطلب
+            cart.delete()
+
+            messages.success(request, f'تم تأكيد طلبك بنجاح! رقم الطلب: {order.order_number}')
+            return redirect('orders:detail', pk=order.pk)
+
+        except Cart.DoesNotExist:
+            messages.error(request, 'سلة التسوق فارغة')
+            return redirect('orders:cart')
+        except Exception as e:
+            messages.error(request, 'حدث خطأ أثناء معالجة الطلب. يرجى المحاولة مرة أخرى.')
+            return redirect('orders:checkout')
 
 
 class OrderListView(LoginRequiredMixin, ListView):

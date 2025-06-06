@@ -47,12 +47,45 @@ def run_command(command, description, show_output=False):
         print(f"❌ {description} - خطأ: {e}")
         return False
 
+def update_allowed_hosts():
+    """تحديث ALLOWED_HOSTS بـ IP المحلي"""
+    local_ip = get_local_ip()
+    if local_ip:
+        print(f"🔧 إضافة {local_ip} إلى ALLOWED_HOSTS...")
+        try:
+            # قراءة ملف settings.py
+            with open('visionlens_store/settings.py', 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # إضافة IP إذا لم يكن موجود
+            if local_ip not in content:
+                # البحث عن ALLOWED_HOSTS وإضافة IP
+                if "'*'," not in content:
+                    content = content.replace(
+                        "'0.0.0.0',",
+                        f"'0.0.0.0',\n    '{local_ip}',  # IP المحلي التلقائي"
+                    )
+
+                    # كتابة الملف
+                    with open('visionlens_store/settings.py', 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    print(f"✅ تم إضافة {local_ip} إلى ALLOWED_HOSTS")
+                else:
+                    print("✅ ALLOWED_HOSTS يقبل جميع العناوين")
+            else:
+                print(f"✅ {local_ip} موجود بالفعل في ALLOWED_HOSTS")
+        except Exception as e:
+            print(f"⚠️  تعذر تحديث ALLOWED_HOSTS: {e}")
+
 def setup_project():
     """إعداد المشروع كاملاً"""
     print("🔧 بدء إعداد المشروع...\n")
-    
+
     # إعداد متغير البيئة
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'visionlens_store.settings')
+
+    # تحديث ALLOWED_HOSTS
+    update_allowed_hosts()
     
     # تثبيت المكتبات الأساسية
     packages = ['Django==4.2.7', 'Pillow==10.0.1', 'whitenoise==6.6.0']
@@ -102,11 +135,33 @@ def get_local_ip():
     """الحصول على عنوان IP المحلي"""
     try:
         import socket
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
+        # طريقة أفضل للحصول على IP المحلي
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
         return local_ip
     except:
-        return None
+        try:
+            # طريقة بديلة
+            hostname = socket.gethostname()
+            local_ip = socket.gethostbyname(hostname)
+            return local_ip
+        except:
+            return None
+
+def check_network_connectivity():
+    """فحص الاتصال بالشبكة"""
+    import socket
+    try:
+        # فحص المنفذ 8000
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)
+        result = sock.connect_ex(('127.0.0.1', 8000))
+        sock.close()
+        return result == 0
+    except:
+        return False
 
 def start_server(network_access=True):
     """تشغيل الخادم"""
@@ -127,8 +182,12 @@ def start_server(network_access=True):
         print(f"   🔧 لوحة الإدارة: http://{local_ip}:8000/admin/")
         print(f"   📊 لوحة التحكم: http://{local_ip}:8000/dashboard/")
         print(f"\n💡 شارك هذا الرابط مع الأجهزة الأخرى: http://{local_ip}:8000/")
+        print(f"\n📱 للموبايل/التابلت: افتح المتصفح واكتب: http://{local_ip}:8000/")
+        print(f"🔥 تأكد من أن جدار الحماية (Firewall) لا يحجب المنفذ 8000")
     elif not network_access:
         print("\n🔒 الوصول محدود لهذا الجهاز فقط")
+    else:
+        print("\n⚠️  تعذر الحصول على عنوان IP المحلي")
     
     print("\n🔐 معلومات تسجيل الدخول:")
     print("   👤 اسم المستخدم: admin")
@@ -201,6 +260,7 @@ def main():
         
         if choice == '1':
             print("\n🚀 تشغيل سريع مع الشبكة...")
+            update_allowed_hosts()  # تحديث ALLOWED_HOSTS
             start_server(network_access=True)
 
         elif choice == '2':

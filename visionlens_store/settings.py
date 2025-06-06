@@ -40,11 +40,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-zjbtw9dqu*4re^b&uo-61b$j3fmaac164$+pot+79yi9u9gnks'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
+    '0.0.0.0',
+    '192.168.0.111',  # IP المحلي الحالي
+    '192.168.16.75',  # IP المحلي السابق
+    '*',              # السماح لجميع العناوين (للتطوير فقط)
     'visionlens.ifdxgh.workers.dev',
     '*.workers.dev',
     '*.pages.dev',
