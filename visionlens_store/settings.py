@@ -31,9 +31,11 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
+    'visionlens.ifdxgh.workers.dev',
+    '*.workers.dev',
+    '*.pages.dev',
     '1477d897.visionlens1.pages.dev',
     'visionlens1.pages.dev',
-    '*.pages.dev',
 ]
 
 
