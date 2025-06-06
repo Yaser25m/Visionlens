@@ -1,0 +1,415 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .changelist-header {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .changelist-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0;
+        flex-grow: 1;
+    }
+    
+    .changelist-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .changelist-search {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    
+    .changelist-search h3 {
+        margin: 0 0 1rem 0;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    .changelist-search .form-row {
+        display: flex;
+        gap: 1rem;
+        align-items: end;
+        flex-wrap: wrap;
+        padding: 0;
+        border: none;
+        margin: 0;
+    }
+    
+    .changelist-search input[type="text"] {
+        flex-grow: 1;
+        min-width: 200px;
+        padding: 0.75rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .changelist-search input[type="text"]:focus {
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        outline: none;
+    }
+    
+    .changelist-search input[type="submit"] {
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, var(--secondary-color), #5dade2);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .changelist-search input[type="submit"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+    }
+    
+    .changelist-filters {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    
+    .changelist-filters h3 {
+        margin: 0 0 1rem 0;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    .changelist-filters ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .changelist-filters li {
+        margin: 0;
+    }
+    
+    .changelist-filters a {
+        display: block;
+        padding: 0.5rem 1rem;
+        background: #f8f9fa;
+        color: var(--primary-color);
+        text-decoration: none;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+    
+    .changelist-filters a:hover,
+    .changelist-filters a.selected {
+        background: var(--secondary-color);
+        color: white;
+    }
+    
+    .results-container {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    
+    .results-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+        color: white;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .results-title {
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .results-count {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .action-checkbox-column {
+        width: 50px;
+        text-align: center;
+    }
+    
+    .action-checkbox {
+        transform: scale(1.2);
+    }
+    
+    .actions {
+        background: #f8f9fa;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .actions select {
+        padding: 0.5rem;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        background: white;
+    }
+    
+    .actions button {
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, var(--warning-color), #e67e22);
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .actions button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(243, 156, 18, 0.3);
+    }
+    
+    .paginator {
+        background: #f8f9fa;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .paginator a,
+    .paginator .this-page {
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        text-decoration: none;
+        color: var(--primary-color);
+        transition: all 0.3s ease;
+    }
+    
+    .paginator a:hover {
+        background: var(--secondary-color);
+        color: white;
+    }
+    
+    .paginator .this-page {
+        background: var(--primary-color);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .empty-message {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-message i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+        opacity: 0.5;
+    }
+    
+    @media (max-width: 768px) {
+        .changelist-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .changelist-actions {
+            justify-content: center;
+        }
+        
+        .changelist-search .form-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .changelist-search input[type="text"] {
+            min-width: auto;
+        }
+        
+        .results-header {
+            flex-direction: column;
+            gap: 0.5rem;
+            text-align: center;
+        }
+        
+        .actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .paginator {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="changelist-header">
+    <h1 class="changelist-title">
+        <i class="fas fa-{% if cl.opts.model_name == 'product' %}box{% elif cl.opts.model_name == 'order' %}shopping-cart{% elif cl.opts.model_name == 'user' %}users{% elif cl.opts.model_name == 'review' %}star{% else %}list{% endif %} me-2"></i>
+        {{ cl.opts.verbose_name_plural|capfirst }}
+    </h1>
+    <div class="changelist-actions">
+        {% if has_add_permission %}
+            <a href="{% url cl.opts|admin_urlname:'add' %}" class="button">
+                <i class="fas fa-plus me-2"></i>إضافة {{ cl.opts.verbose_name }}
+            </a>
+        {% endif %}
+        {% if cl.has_filters %}
+            <button type="button" class="button" onclick="toggleFilters()">
+                <i class="fas fa-filter me-2"></i>الفلاتر
+            </button>
+        {% endif %}
+    </div>
+</div>
+
+{% if cl.search_fields %}
+<div class="changelist-search">
+    <h3><i class="fas fa-search me-2"></i>البحث</h3>
+    <form id="changelist-search" method="get">
+        <div class="form-row">
+            <input type="text" name="{{ search_var }}" value="{{ cl.query }}" placeholder="ابحث في {{ cl.opts.verbose_name_plural }}...">
+            <input type="submit" value="بحث">
+            {% if cl.query %}
+                <a href="?" class="button" style="background: var(--danger-color);">
+                    <i class="fas fa-times me-2"></i>مسح
+                </a>
+            {% endif %}
+        </div>
+        {% for k, v in cl.params.items %}
+            {% if k != search_var %}
+                <input type="hidden" name="{{ k }}" value="{{ v }}">
+            {% endif %}
+        {% endfor %}
+    </form>
+</div>
+{% endif %}
+
+{% if cl.has_filters %}
+<div class="changelist-filters" id="changelist-filters" style="display: none;">
+    <h3><i class="fas fa-filter me-2"></i>تصفية النتائج</h3>
+    {% for spec in cl.filter_specs %}
+        <div class="filter-group">
+            <h4>{{ spec.title }}</h4>
+            <ul>
+                {% for choice in spec.choices %}
+                    <li>
+                        <a href="{{ choice.query_string|iriencode }}"
+                           {% if choice.selected %}class="selected"{% endif %}>
+                            {{ choice.display }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="results-container">
+    <div class="results-header">
+        <h2 class="results-title">النتائج</h2>
+        <div class="results-count">
+            {% if cl.result_count %}
+                {{ cl.result_count }} {{ cl.opts.verbose_name_plural }}
+                {% if cl.full_result_count != cl.result_count %}
+                    من أصل {{ cl.full_result_count }}
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if action_form and actions_on_top and cl.show_admin_actions %}
+        <form id="changelist-form" method="post" novalidate>
+            {% csrf_token %}
+            <div class="actions">
+                <label>الإجراء:</label>
+                {{ action_form.action }}
+                <button type="submit" name="index" value="{{ action_index }}">تنفيذ</button>
+                {% if action_form.action.errors %}
+                    {{ action_form.action.errors }}
+                {% endif %}
+            </div>
+    {% endif %}
+    
+    {% if cl.result_count %}
+        <div class="results">
+            {% result_list cl %}
+        </div>
+    {% else %}
+        <div class="empty-message">
+            <i class="fas fa-inbox"></i>
+            <h3>لا توجد نتائج</h3>
+            <p>لم يتم العثور على أي {{ cl.opts.verbose_name_plural }} تطابق معايير البحث.</p>
+            {% if has_add_permission %}
+                <a href="{% url cl.opts|admin_urlname:'add' %}" class="button">
+                    <i class="fas fa-plus me-2"></i>إضافة {{ cl.opts.verbose_name }} جديد
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+    {% if cl.result_count and cl.can_show_all %}
+        <div class="paginator">
+            {% pagination cl %}
+        </div>
+    {% endif %}
+    
+    {% if action_form and actions_on_bottom and cl.show_admin_actions %}
+        </form>
+    {% endif %}
+</div>
+
+<script>
+function toggleFilters() {
+    const filters = document.getElementById('changelist-filters');
+    if (filters.style.display === 'none') {
+        filters.style.display = 'block';
+    } else {
+        filters.style.display = 'none';
+    }
+}
+
+// Auto-hide filters on mobile
+if (window.innerWidth <= 768) {
+    document.getElementById('changelist-filters').style.display = 'none';
+}
+</script>
+{% endblock %}

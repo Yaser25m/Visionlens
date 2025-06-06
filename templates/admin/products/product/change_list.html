@@ -1,0 +1,68 @@
+{% extends "admin/change_list.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+.images-help {
+    background: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+    font-size: 14px;
+}
+
+.images-help h4 {
+    color: #0066cc;
+    margin: 0 0 10px 0;
+    font-size: 16px;
+}
+
+.images-help ul {
+    margin: 10px 0 0 20px;
+    padding: 0;
+}
+
+.images-help li {
+    margin: 5px 0;
+}
+
+.quick-action-btn {
+    display: inline-block;
+    padding: 5px 10px;
+    background: #007cba;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 12px;
+    margin: 2px;
+}
+
+.quick-action-btn:hover {
+    background: #005a87;
+    color: white;
+}
+
+.add-images-btn {
+    background: #28a745;
+}
+
+.add-images-btn:hover {
+    background: #1e7e34;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="images-help">
+    <h4>📷 كيفية إدارة صور المنتجات</h4>
+    <ul>
+        <li><strong>لإضافة صور لمنتج موجود:</strong> انقر على "📷 إضافة صور" أو "➕" في عمود "إدارة الصور"</li>
+        <li><strong>لعرض صور منتج:</strong> انقر على "📷 X صورة" لعرض جميع صور المنتج</li>
+        <li><strong>لإضافة منتج جديد:</strong> أضف المنتج أولاً، ثم أضف الصور من عمود "إدارة الصور"</li>
+        <li><strong>إدارة شاملة للصور:</strong> <a href="/admin/products/productimage/" class="quick-action-btn">عرض جميع الصور</a></li>
+    </ul>
+</div>
+
+{{ block.super }}
+{% endblock %}

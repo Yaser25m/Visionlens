@@ -1,0 +1,87 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+    <h1 style="color: #2c3e50; text-align: center; margin-bottom: 2rem;">
+        🎯 دليل الإدارة المبسط - عدستي
+    </h1>
+    
+    <div style="background: #e8f5e8; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem; border-left: 4px solid #27ae60;">
+        <h3 style="color: #27ae60; margin: 0 0 1rem 0;">✅ تم حل جميع مشاكل النماذج المضمنة!</h3>
+        <p style="margin: 0; color: #2c3e50;">تم تطبيق نظام إدارة منفصل وفعال لجميع العناصر.</p>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        
+        <!-- إدارة المنتجات -->
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #3498db;">
+            <h3 style="color: #3498db; margin: 0 0 1rem 0;">📦 إدارة المنتجات</h3>
+            <ul style="margin: 0; padding-right: 1rem;">
+                <li><a href="/admin/products/product/" style="color: #2c3e50; text-decoration: none;">عرض جميع المنتجات</a></li>
+                <li><a href="/admin/products/product/add/" style="color: #2c3e50; text-decoration: none;">إضافة منتج جديد</a></li>
+                <li><a href="/admin/products/productimage/" style="color: #2c3e50; text-decoration: none;">إدارة صور المنتجات</a></li>
+                <li><a href="/admin/products/category/" style="color: #2c3e50; text-decoration: none;">إدارة الفئات</a></li>
+                <li><a href="/admin/products/brand/" style="color: #2c3e50; text-decoration: none;">إدارة العلامات التجارية</a></li>
+            </ul>
+        </div>
+        
+        <!-- إدارة الطلبات -->
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #e74c3c;">
+            <h3 style="color: #e74c3c; margin: 0 0 1rem 0;">🛒 إدارة الطلبات</h3>
+            <ul style="margin: 0; padding-right: 1rem;">
+                <li><a href="/admin/orders/order/" style="color: #2c3e50; text-decoration: none;">عرض جميع الطلبات</a></li>
+                <li><a href="/admin/orders/orderitem/" style="color: #2c3e50; text-decoration: none;">عناصر الطلبات</a></li>
+                <li><a href="/admin/orders/cart/" style="color: #2c3e50; text-decoration: none;">إدارة السلات</a></li>
+                <li><a href="/admin/orders/cartitem/" style="color: #2c3e50; text-decoration: none;">عناصر السلات</a></li>
+            </ul>
+        </div>
+        
+        <!-- إدارة المستخدمين -->
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #f39c12;">
+            <h3 style="color: #f39c12; margin: 0 0 1rem 0;">👥 إدارة المستخدمين</h3>
+            <ul style="margin: 0; padding-right: 1rem;">
+                <li><a href="/admin/auth/user/" style="color: #2c3e50; text-decoration: none;">عرض جميع المستخدمين</a></li>
+                <li><a href="/admin/auth/user/add/" style="color: #2c3e50; text-decoration: none;">إضافة مستخدم جديد</a></li>
+                <li><a href="/admin/auth/group/" style="color: #2c3e50; text-decoration: none;">إدارة المجموعات</a></li>
+            </ul>
+        </div>
+        
+        <!-- لوحة التحكم -->
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #9b59b6;">
+            <h3 style="color: #9b59b6; margin: 0 0 1rem 0;">📊 لوحة التحكم</h3>
+            <ul style="margin: 0; padding-right: 1rem;">
+                <li><a href="/dashboard/" style="color: #2c3e50; text-decoration: none;">لوحة التحكم الرئيسية</a></li>
+                <li><a href="/dashboard/products/" style="color: #2c3e50; text-decoration: none;">إدارة المنتجات المتقدمة</a></li>
+                <li><a href="/dashboard/orders/" style="color: #2c3e50; text-decoration: none;">إدارة الطلبات المتقدمة</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <div style="background: #fff3cd; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem; border-left: 4px solid #ffc107;">
+        <h3 style="color: #856404; margin: 0 0 1rem 0;">💡 نصائح مهمة</h3>
+        <ul style="margin: 0; padding-right: 1rem; color: #856404;">
+            <li><strong>إضافة المنتجات:</strong> أضف المنتج أولاً، ثم أضف الصور من رابط "إدارة الصور"</li>
+            <li><strong>إدارة الطلبات:</strong> استخدم رابط "العناصر" لعرض تفاصيل كل طلب</li>
+            <li><strong>القوائم المنسدلة:</strong> تعمل بشكل طبيعي في جميع الصفحات</li>
+            <li><strong>لا توجد رسائل خطأ:</strong> تم حل جميع مشاكل النماذج المضمنة</li>
+        </ul>
+    </div>
+    
+    <div style="background: #d1ecf1; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #17a2b8;">
+        <h3 style="color: #0c5460; margin: 0 0 1rem 0;">🔧 الحلول المطبقة</h3>
+        <ul style="margin: 0; padding-right: 1rem; color: #0c5460;">
+            <li>✅ إزالة النماذج المضمنة المعطلة</li>
+            <li>✅ إنشاء نظام إدارة منفصل وفعال</li>
+            <li>✅ إصلاح القوائم المنسدلة في جميع الصفحات</li>
+            <li>✅ روابط سريعة لإدارة العناصر المرتبطة</li>
+            <li>✅ واجهة نظيفة بدون رسائل خطأ</li>
+        </ul>
+    </div>
+    
+    <div style="text-align: center; margin-top: 2rem;">
+        <a href="/admin/" style="background: linear-gradient(135deg, #2c3e50, #3498db); color: white; padding: 1rem 2rem; border-radius: 10px; text-decoration: none; font-weight: bold;">
+            🏠 العودة للصفحة الرئيسية
+        </a>
+    </div>
+</div>
+{% endblock %}

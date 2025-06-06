@@ -1,0 +1,205 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}الملف الشخصي - عدستي{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">الرئيسية</a></li>
+            <li class="breadcrumb-item active">الملف الشخصي</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if user.userprofile.avatar %}
+                        <img src="{{ user.userprofile.avatar.url }}" class="rounded-circle mb-3" width="100" height="100" alt="الصورة الشخصية">
+                    {% else %}
+                        <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px;">
+                            <i class="fas fa-user fa-3x text-white"></i>
+                        </div>
+                    {% endif %}
+                    <h5>{{ user.first_name|default:user.username }}</h5>
+                    <p class="text-muted">{{ user.email }}</p>
+                </div>
+            </div>
+
+            <div class="list-group mt-3">
+                <a href="{% url 'accounts:profile' %}" class="list-group-item list-group-item-action active">
+                    <i class="fas fa-user me-2"></i>الملف الشخصي
+                </a>
+                <a href="{% url 'orders:list' %}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-shopping-bag me-2"></i>طلباتي
+                </a>
+                <a href="{% url 'accounts:addresses' %}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-map-marker-alt me-2"></i>العناوين
+                </a>
+                <a href="#" class="list-group-item list-group-item-action">
+                    <i class="fas fa-heart me-2"></i>المفضلة
+                </a>
+                <a href="{% url 'accounts:logout' %}" class="list-group-item list-group-item-action text-danger">
+                    <i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">المعلومات الشخصية</h5>
+                    <a href="{% url 'accounts:edit_profile' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit me-1"></i>تعديل
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">الاسم الأول</label>
+                                    <input type="text" class="form-control" value="{{ user.first_name }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">اسم العائلة</label>
+                                    <input type="text" class="form-control" value="{{ user.last_name }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">البريد الإلكتروني</label>
+                                    <input type="email" class="form-control" value="{{ user.email }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">رقم الهاتف</label>
+                                    <input type="text" class="form-control" value="{{ user.userprofile.phone|default:'غير محدد' }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">تاريخ الميلاد</label>
+                                    <input type="text" class="form-control" value="{{ user.userprofile.birth_date|default:'غير محدد' }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">الجنس</label>
+                                    <input type="text" class="form-control" value="{{ user.userprofile.get_gender_display|default:'غير محدد' }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">اللغة المفضلة</label>
+                                    <input type="text" class="form-control" value="{{ user.userprofile.get_preferred_language_display }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">اشتراك النشرة الإخبارية</label>
+                                    <input type="text" class="form-control" value="{% if user.userprofile.newsletter_subscription %}مفعل{% else %}غير مفعل{% endif %}" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Account Statistics -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-shopping-bag fa-2x text-primary mb-2"></i>
+                            <h4>{{ user.order_set.count }}</h4>
+                            <p class="text-muted">إجمالي الطلبات</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                            <h4>{{ user.review_set.count }}</h4>
+                            <p class="text-muted">التقييمات</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-map-marker-alt fa-2x text-success mb-2"></i>
+                            <h4>{{ user.addresses.count }}</h4>
+                            <p class="text-muted">العناوين المحفوظة</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Orders -->
+            {% if user.order_set.all %}
+            <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">آخر الطلبات</h5>
+                    <a href="{% url 'orders:list' %}" class="btn btn-outline-primary btn-sm">عرض الكل</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>رقم الطلب</th>
+                                    <th>التاريخ</th>
+                                    <th>الحالة</th>
+                                    <th>المبلغ</th>
+                                    <th>العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in user.order_set.all|slice:":5" %}
+                                <tr>
+                                    <td>{{ order.order_number }}</td>
+                                    <td>{{ order.created_at|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}primary{% endif %}">
+                                            {{ order.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ order.total_amount }} د.ع</td>
+                                    <td>
+                                        <a href="{% url 'orders:detail' order.pk %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

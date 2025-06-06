@@ -1,0 +1,182 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}إضافة تقييم - عدستي{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">الرئيسية</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'products:list' %}">المنتجات</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'products:detail' product.pk %}">{{ product.name }}</a></li>
+            <li class="breadcrumb-item active">إضافة تقييم</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">إضافة تقييم للمنتج</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Product Info -->
+                    <div class="d-flex align-items-center mb-4 p-3 bg-light rounded">
+                        {% if product.images.first %}
+                            <img src="{{ product.images.first.image.url }}" class="me-3" width="80" height="80" style="object-fit: cover;" alt="{{ product.name }}">
+                        {% else %}
+                            <img src="{% static 'images/no-image.svg' %}" class="me-3" width="80" height="80" alt="{{ product.name }}">
+                        {% endif %}
+                        <div>
+                            <h5 class="mb-1">{{ product.name }}</h5>
+                            <p class="text-muted mb-0">{{ product.brand.name }}</p>
+                            <small class="text-muted">{{ product.get_lens_type_display }} - {{ product.color }}</small>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Rating -->
+                        <div class="mb-4">
+                            <label class="form-label">التقييم *</label>
+                            <div class="rating-input">
+                                <input type="hidden" name="rating" id="rating-value" value="5">
+                                <div class="star-rating-input">
+                                    <i class="fas fa-star" data-rating="1"></i>
+                                    <i class="fas fa-star" data-rating="2"></i>
+                                    <i class="fas fa-star" data-rating="3"></i>
+                                    <i class="fas fa-star" data-rating="4"></i>
+                                    <i class="fas fa-star" data-rating="5"></i>
+                                </div>
+                                <small class="form-text text-muted">انقر على النجوم لإعطاء تقييمك</small>
+                            </div>
+                        </div>
+
+                        <!-- Title -->
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label">عنوان التقييم *</label>
+                            <input type="text" class="form-control" id="id_title" name="title" maxlength="200" required placeholder="مثال: منتج ممتاز وجودة عالية">
+                        </div>
+
+                        <!-- Comment -->
+                        <div class="mb-4">
+                            <label for="id_comment" class="form-label">التعليق *</label>
+                            <textarea class="form-control" id="id_comment" name="comment" rows="5" required placeholder="شاركنا تجربتك مع هذا المنتج..."></textarea>
+                            <small class="form-text text-muted">اكتب تقييماً مفصلاً ليساعد العملاء الآخرين</small>
+                        </div>
+
+                        <!-- Guidelines -->
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>إرشادات كتابة التقييم:</h6>
+                            <ul class="mb-0">
+                                <li>اكتب تقييماً صادقاً ومفيداً</li>
+                                <li>ركز على جودة المنتج وتجربة الاستخدام</li>
+                                <li>تجنب استخدام لغة غير لائقة</li>
+                                <li>لا تذكر معلومات شخصية</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-star me-2"></i>إضافة التقييم
+                            </button>
+                            <a href="{% url 'products:detail' product.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.star-rating-input {
+    font-size: 2rem;
+    color: #ddd;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+}
+
+.star-rating-input i {
+    transition: color 0.2s ease;
+}
+
+.star-rating-input i:hover,
+.star-rating-input i.active {
+    color: #ffc107;
+}
+
+.star-rating-input i:hover ~ i {
+    color: #ddd;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stars = document.querySelectorAll('.star-rating-input i');
+    const ratingValue = document.getElementById('rating-value');
+    
+    // Set initial rating
+    updateStars(5);
+    
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.dataset.rating);
+            ratingValue.value = rating;
+            updateStars(rating);
+        });
+        
+        star.addEventListener('mouseenter', function() {
+            const rating = parseInt(this.dataset.rating);
+            highlightStars(rating);
+        });
+    });
+    
+    document.querySelector('.star-rating-input').addEventListener('mouseleave', function() {
+        const currentRating = parseInt(ratingValue.value);
+        updateStars(currentRating);
+    });
+    
+    function updateStars(rating) {
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.classList.add('active');
+                star.style.color = '#ffc107';
+            } else {
+                star.classList.remove('active');
+                star.style.color = '#ddd';
+            }
+        });
+    }
+    
+    function highlightStars(rating) {
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.style.color = '#ffc107';
+            } else {
+                star.style.color = '#ddd';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

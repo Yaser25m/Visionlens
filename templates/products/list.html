@@ -1,0 +1,242 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}المنتجات - عدستي{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">الرئيسية</a></li>
+            <li class="breadcrumb-item active">المنتجات</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-filter me-2"></i>تصفية المنتجات</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET">
+                        <!-- Search -->
+                        <div class="mb-3">
+                            <label class="form-label">البحث</label>
+                            <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="ابحث عن المنتجات...">
+                        </div>
+
+                        <!-- Categories -->
+                        <div class="mb-3">
+                            <label class="form-label">الفئات</label>
+                            <select class="form-select" name="category">
+                                <option value="">جميع الفئات</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if current_category == category.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Brands -->
+                        <div class="mb-3">
+                            <label class="form-label">العلامات التجارية</label>
+                            <select class="form-select" name="brand">
+                                <option value="">جميع العلامات</option>
+                                {% for brand in brands %}
+                                    <option value="{{ brand.id }}" {% if current_brand == brand.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ brand.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Lens Type -->
+                        <div class="mb-3">
+                            <label class="form-label">نوع العدسة</label>
+                            <select class="form-select" name="lens_type">
+                                <option value="">جميع الأنواع</option>
+                                <option value="daily" {% if request.GET.lens_type == 'daily' %}selected{% endif %}>يومية</option>
+                                <option value="weekly" {% if request.GET.lens_type == 'weekly' %}selected{% endif %}>أسبوعية</option>
+                                <option value="monthly" {% if request.GET.lens_type == 'monthly' %}selected{% endif %}>شهرية</option>
+                                <option value="yearly" {% if request.GET.lens_type == 'yearly' %}selected{% endif %}>سنوية</option>
+                            </select>
+                        </div>
+
+                        <!-- Lens Usage -->
+                        <div class="mb-3">
+                            <label class="form-label">الاستخدام</label>
+                            <select class="form-select" name="lens_usage">
+                                <option value="">جميع الاستخدامات</option>
+                                <option value="medical" {% if request.GET.lens_usage == 'medical' %}selected{% endif %}>طبية</option>
+                                <option value="cosmetic" {% if request.GET.lens_usage == 'cosmetic' %}selected{% endif %}>تجميلية</option>
+                                <option value="both" {% if request.GET.lens_usage == 'both' %}selected{% endif %}>طبية وتجميلية</option>
+                            </select>
+                        </div>
+
+                        <!-- Price Range -->
+                        <div class="mb-3">
+                            <label class="form-label">نطاق السعر (د.ع)</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="number" class="form-control" name="min_price" value="{{ request.GET.min_price }}" placeholder="من">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control" name="max_price" value="{{ request.GET.max_price }}" placeholder="إلى">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-2"></i>تطبيق الفلاتر
+                        </button>
+                        <a href="{% url 'products:list' %}" class="btn btn-outline-secondary w-100 mt-2">
+                            <i class="fas fa-times me-2"></i>إزالة الفلاتر
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products -->
+        <div class="col-lg-9">
+            <!-- Sort and Results Info -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4>المنتجات</h4>
+                    <p class="text-muted">عرض {{ products|length }} من أصل {{ paginator.count }} منتج</p>
+                </div>
+                <div>
+                    <form method="GET" class="d-flex align-items-center">
+                        {% for key, value in request.GET.items %}
+                            {% if key != 'sort' %}
+                                <input type="hidden" name="{{ key }}" value="{{ value }}">
+                            {% endif %}
+                        {% endfor %}
+                        <label class="form-label me-2 mb-0">ترتيب حسب:</label>
+                        <select class="form-select" name="sort" onchange="this.form.submit()" style="width: auto;">
+                            <option value="name" {% if current_sort == 'name' %}selected{% endif %}>الاسم</option>
+                            <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>السعر: من الأقل للأعلى</option>
+                            <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>السعر: من الأعلى للأقل</option>
+                            <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>الأحدث</option>
+                            <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>التقييم</option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="row g-4">
+                {% for product in products %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card product-card h-100">
+                        {% if product.discount_percentage %}
+                            <div class="discount-badge">-{{ product.discount_percentage }}%</div>
+                        {% endif %}
+                        
+                        {% if product.images.first %}
+                            <img src="{{ product.images.first.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                        {% else %}
+                            <img src="{% static 'images/no-image.svg' %}" class="card-img-top" alt="{{ product.name }}">
+                        {% endif %}
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title">{{ product.name }}</h6>
+                            <p class="card-text text-muted small flex-grow-1">{{ product.description|truncatewords:10 }}</p>
+                            
+                            <!-- Product Info -->
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-tag me-1"></i>{{ product.get_lens_type_display }}
+                                    <span class="mx-2">|</span>
+                                    <i class="fas fa-eye me-1"></i>{{ product.get_lens_usage_display }}
+                                </small>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    {% if product.discount_price %}
+                                        <span class="product-price">{{ product.discount_price }} د.ع</span>
+                                        <span class="product-price-old">{{ product.price }} د.ع</span>
+                                    {% else %}
+                                        <span class="product-price">{{ product.price }} د.ع</span>
+                                    {% endif %}
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'products:detail' product.pk %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if product.is_in_stock %}
+                                        <form class="d-inline add-to-cart-form" action="{% url 'orders:add_to_cart' %}" method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="product_id" value="{{ product.id }}">
+                                            <input type="hidden" name="quantity" value="1">
+                                            <button type="submit" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-cart-plus"></i>
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm" disabled>
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if not product.is_in_stock %}
+                                <small class="text-danger mt-1">غير متوفر</small>
+                            {% elif product.is_low_stock %}
+                                <small class="text-warning mt-1">كمية محدودة</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h4>لا توجد منتجات</h4>
+                        <p class="text-muted">لم يتم العثور على منتجات تطابق معايير البحث الخاصة بك.</p>
+                        <a href="{% url 'products:list' %}" class="btn btn-primary">عرض جميع المنتجات</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="صفحات المنتجات" class="mt-5">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">السابق</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">التالي</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,282 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - عدستي{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">الرئيسية</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'products:list' %}">المنتجات</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'products:category' product.category.id %}">{{ product.category.name }}</a></li>
+            <li class="breadcrumb-item active">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Product Images -->
+        <div class="col-lg-6">
+            <div class="product-gallery">
+                {% if product.images.all %}
+                    <!-- Main Image -->
+                    <div class="mb-3">
+                        <img src="{{ product.images.first.image.url }}" class="img-fluid rounded main-product-image" alt="{{ product.name }}" style="width: 100%; height: 400px; object-fit: cover;">
+                    </div>
+                    
+                    <!-- Thumbnail Images -->
+                    {% if product.images.count > 1 %}
+                    <div class="row g-2">
+                        {% for image in product.images.all %}
+                        <div class="col-3">
+                            <img src="{{ image.image.url }}" class="img-fluid rounded {% if forloop.first %}active{% endif %}" alt="{{ product.name }}" style="height: 80px; object-fit: cover; cursor: pointer;">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <img src="{% static 'images/no-image.svg' %}" class="img-fluid rounded" alt="{{ product.name }}">
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Product Info -->
+        <div class="col-lg-6">
+            <div class="product-info">
+                <h1 class="h3 mb-3">{{ product.name }}</h1>
+                
+                <!-- Brand -->
+                <p class="text-muted mb-2">
+                    <i class="fas fa-tag me-2"></i>
+                    <a href="{% url 'products:brand' product.brand.id %}" class="text-decoration-none">{{ product.brand.name }}</a>
+                </p>
+
+                <!-- Rating -->
+                {% if average_rating %}
+                <div class="mb-3">
+                    <div class="star-rating">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= average_rating %}
+                                <i class="fas fa-star"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                        <span class="ms-2">({{ reviews_count }} تقييم)</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Price -->
+                <div class="mb-4">
+                    {% if product.discount_price %}
+                        <h3 class="text-primary mb-0">{{ product.discount_price }} د.ع</h3>
+                        <p class="text-muted"><del>{{ product.price }} د.ع</del> <span class="badge bg-danger">خصم {{ product.discount_percentage }}%</span></p>
+                    {% else %}
+                        <h3 class="text-primary mb-0">{{ product.price }} د.ع</h3>
+                    {% endif %}
+                </div>
+
+                <!-- Product Details -->
+                <div class="mb-4">
+                    <h5>تفاصيل المنتج</h5>
+                    <ul class="list-unstyled">
+                        <li><strong>النوع:</strong> {{ product.get_lens_type_display }}</li>
+                        <li><strong>الاستخدام:</strong> {{ product.get_lens_usage_display }}</li>
+                        <li><strong>اللون:</strong> {{ product.color }}</li>
+                        {% if product.power %}
+                            <li><strong>القوة:</strong> {{ product.power }}</li>
+                        {% endif %}
+                        {% if product.diameter %}
+                            <li><strong>القطر:</strong> {{ product.diameter }}</li>
+                        {% endif %}
+                        {% if product.base_curve %}
+                            <li><strong>انحناء القاعدة:</strong> {{ product.base_curve }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <!-- Stock Status -->
+                <div class="mb-4">
+                    {% if product.is_in_stock %}
+                        {% if product.is_low_stock %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-exclamation-triangle me-1"></i>كمية محدودة ({{ product.stock_quantity }} متبقي)
+                            </span>
+                        {% else %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check me-1"></i>متوفر في المخزون
+                            </span>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge bg-danger">
+                            <i class="fas fa-times me-1"></i>غير متوفر
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!-- Add to Cart -->
+                {% if product.is_in_stock %}
+                <form class="add-to-cart-form mb-4" action="{% url 'orders:add_to_cart' %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-auto">
+                            <label class="form-label">الكمية</label>
+                            <div class="input-group" style="width: 120px;">
+                                <button class="btn btn-outline-secondary quantity-minus" type="button">-</button>
+                                <input type="number" class="form-control text-center quantity-input" name="quantity" value="1" min="1" max="{{ product.stock_quantity }}">
+                                <button class="btn btn-outline-secondary quantity-plus" type="button">+</button>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-cart-plus me-2"></i>إضافة إلى السلة
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                {% endif %}
+
+                <!-- Wishlist -->
+                <div class="mb-4">
+                    <button class="btn btn-outline-secondary wishlist-btn" data-product-id="{{ product.id }}">
+                        <i class="far fa-heart me-2"></i>إضافة إلى المفضلة
+                    </button>
+                </div>
+
+                <!-- Share -->
+                <div class="mb-4">
+                    <h6>مشاركة المنتج</h6>
+                    <div class="d-flex gap-2">
+                        <a href="#" class="btn btn-outline-primary btn-sm">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-info btn-sm">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-success btn-sm">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Description -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#description">الوصف</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#reviews">التقييمات ({{ reviews_count }})</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <!-- Description Tab -->
+                        <div class="tab-pane fade show active" id="description">
+                            <p>{{ product.description|linebreaks }}</p>
+                        </div>
+
+                        <!-- Reviews Tab -->
+                        <div class="tab-pane fade" id="reviews">
+                            {% if user.is_authenticated %}
+                                <div class="mb-4">
+                                    <a href="{% url 'reviews:add' product.id %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>إضافة تقييم
+                                    </a>
+                                </div>
+                            {% endif %}
+
+                            {% for review in reviews %}
+                            <div class="review-card mb-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="star-rating mb-2">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        <h6>{{ review.title }}</h6>
+                                        <p>{{ review.comment }}</p>
+                                        <small class="text-muted">
+                                            بواسطة {{ review.user.first_name|default:review.user.username }} - {{ review.created_at|date:"d/m/Y" }}
+                                            {% if review.is_verified_purchase %}
+                                                <span class="badge bg-success ms-2">شراء موثق</span>
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    {% if user == review.user %}
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="{% url 'reviews:edit' review.pk %}">تعديل</a></li>
+                                            <li><a class="dropdown-item text-danger" href="{% url 'reviews:delete' review.pk %}">حذف</a></li>
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                                <h5>لا توجد تقييمات بعد</h5>
+                                <p class="text-muted">كن أول من يقيم هذا المنتج</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    {% if related_products %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="mb-4">منتجات مشابهة</h3>
+            <div class="row g-4">
+                {% for product in related_products %}
+                <div class="col-md-6 col-lg-3">
+                    <div class="card product-card h-100">
+                        {% if product.images.first %}
+                            <img src="{{ product.images.first.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                        {% else %}
+                            <img src="{% static 'images/no-image.svg' %}" class="card-img-top" alt="{{ product.name }}">
+                        {% endif %}
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title">{{ product.name }}</h6>
+                            <p class="card-text text-muted small flex-grow-1">{{ product.description|truncatewords:8 }}</p>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="product-price">{{ product.get_price }} د.ع</span>
+                                <a href="{% url 'products:detail' product.pk %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,305 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}لوحة التحكم الرئيسية - عدستي{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">لوحة التحكم</h1>
+    <p class="page-subtitle">نظرة عامة على أداء المتجر والإحصائيات</p>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-3">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stat-card primary">
+            <div class="stat-icon">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="stat-value">{{ total_products }}</div>
+            <p class="stat-label">إجمالي المنتجات</p>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stat-card success">
+            <div class="stat-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stat-value">{{ total_orders }}</div>
+            <p class="stat-label">إجمالي الطلبات</p>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stat-card warning">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-value">{{ total_users }}</div>
+            <p class="stat-label">إجمالي العملاء</p>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stat-card danger">
+            <div class="stat-icon">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="stat-value">{{ total_revenue|floatformat:0 }}</div>
+            <p class="stat-label">إجمالي الإيرادات (د.ع)</p>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Stats -->
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="stat-card primary" style="min-height: 180px;">
+            <h6 class="mb-2"><i class="fas fa-calendar-alt me-2"></i>إحصائيات هذا الشهر</h6>
+            <div class="row">
+                <div class="col-6">
+                    <div class="text-center">
+                        <div class="stat-value text-primary" style="font-size: 1.5rem;">{{ monthly_orders }}</div>
+                        <p class="stat-label" style="font-size: 0.85rem;">طلبات جديدة</p>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="text-center">
+                        <div class="stat-value text-success" style="font-size: 1.5rem;">{{ monthly_revenue|floatformat:0 }}</div>
+                        <p class="stat-label" style="font-size: 0.85rem;">إيرادات (د.ع)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="stat-card warning" style="min-height: 180px;">
+            <h6 class="mb-2"><i class="fas fa-chart-pie me-2"></i>توزيع الطلبات</h6>
+            <div style="height: 140px; position: relative;">
+                <canvas id="orderStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Orders and Top Products -->
+<div class="row mb-3">
+    <div class="col-lg-8">
+        <div class="table-card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>الطلبات الحديثة</h5>
+            </div>
+            <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 table-sm">
+                        <thead>
+                            <tr>
+                                <th>رقم الطلب</th>
+                                <th>العميل</th>
+                                <th>المبلغ</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td><strong>#{{ order.id }}</strong></td>
+                                <td>{{ order.user.get_full_name|default:order.user.username }}</td>
+                                <td>{{ order.total_amount|floatformat:0 }} د.ع</td>
+                                <td>
+                                    {% if order.status == 'pending' %}
+                                        <span class="badge bg-warning">في الانتظار</span>
+                                    {% elif order.status == 'processing' %}
+                                        <span class="badge bg-info">قيد المعالجة</span>
+                                    {% elif order.status == 'shipped' %}
+                                        <span class="badge bg-primary">تم الشحن</span>
+                                    {% elif order.status == 'delivered' %}
+                                        <span class="badge bg-success">تم التسليم</span>
+                                    {% elif order.status == 'cancelled' %}
+                                        <span class="badge bg-danger">ملغي</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ order.created_at|date:"Y/m/d" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">لا توجد طلبات حديثة</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="table-card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-star me-2"></i>المنتجات الأكثر مبيعاً</h5>
+            </div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                {% for product in top_products %}
+                <div class="d-flex align-items-center mb-2">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1" style="font-size: 0.9rem;">{{ product.name }}</h6>
+                        <small class="text-muted" style="font-size: 0.8rem;">{{ product.total_sold }} قطعة مباعة</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-success" style="font-size: 0.75rem;">{{ product.price|floatformat:0 }} د.ع</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center" style="font-size: 0.9rem;">لا توجد بيانات مبيعات</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Stock Products -->
+{% if low_stock_products %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="table-card">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0 text-white"><i class="fas fa-exclamation-triangle me-2"></i>منتجات منخفضة المخزون</h5>
+            </div>
+            <div class="card-body p-0" style="max-height: 250px; overflow-y: auto;">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 table-sm">
+                        <thead>
+                            <tr>
+                                <th>المنتج</th>
+                                <th>الفئة</th>
+                                <th>الكمية المتبقية</th>
+                                <th>السعر</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in low_stock_products %}
+                            <tr>
+                                <td>
+                                    <strong>{{ product.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ product.brand.name }}</small>
+                                </td>
+                                <td>{{ product.category.name }}</td>
+                                <td>
+                                    <span class="badge bg-danger">{{ product.stock_quantity }}</span>
+                                </td>
+                                <td>{{ product.price|floatformat:0 }} د.ع</td>
+                                <td>
+                                    <a href="{% url 'admin:products_product_change' product.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-edit"></i> تعديل
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Activities -->
+<div class="row">
+    <div class="col-12">
+        <div class="table-card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>الأنشطة الحديثة</h5>
+            </div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                {% for activity in recent_activities %}
+                <div class="d-flex align-items-center mb-2">
+                    <div class="me-3">
+                        {% if activity.action == 'create' %}
+                            <i class="fas fa-plus-circle text-success"></i>
+                        {% elif activity.action == 'update' %}
+                            <i class="fas fa-edit text-primary"></i>
+                        {% elif activity.action == 'delete' %}
+                            <i class="fas fa-trash text-danger"></i>
+                        {% elif activity.action == 'login' %}
+                            <i class="fas fa-sign-in-alt text-info"></i>
+                        {% else %}
+                            <i class="fas fa-circle text-secondary"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <strong>{{ activity.user.username }}</strong>
+                        {{ activity.get_action_display }}
+                        {% if activity.model_name %}{{ activity.model_name }}{% endif %}
+                        {% if activity.description %}
+                            <br><small class="text-muted">{{ activity.description }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted">{{ activity.timestamp|timesince }} مضت</small>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">لا توجد أنشطة حديثة</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Order Status Chart
+const ctx = document.getElementById('orderStatusChart').getContext('2d');
+const orderStatusData = {
+    labels: [
+        {% for stat in order_stats %}
+            '{% if stat.status == "pending" %}في الانتظار{% elif stat.status == "processing" %}قيد المعالجة{% elif stat.status == "shipped" %}تم الشحن{% elif stat.status == "delivered" %}تم التسليم{% elif stat.status == "cancelled" %}ملغي{% endif %}',
+        {% endfor %}
+    ],
+    datasets: [{
+        data: [
+            {% for stat in order_stats %}{{ stat.count }},{% endfor %}
+        ],
+        backgroundColor: [
+            '#f39c12',
+            '#3498db',
+            '#9b59b6',
+            '#27ae60',
+            '#e74c3c'
+        ],
+        borderWidth: 0
+    }]
+};
+
+new Chart(ctx, {
+    type: 'doughnut',
+    data: orderStatusData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 8,
+                    usePointStyle: true,
+                    font: {
+                        size: 10
+                    }
+                }
+            }
+        },
+        layout: {
+            padding: 5
+        }
+    }
+});
+</script>
+{% endblock %}

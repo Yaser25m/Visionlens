@@ -1,0 +1,280 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static admin_urls %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: none;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin: 0 auto 1rem auto;
+        color: white;
+    }
+    
+    .stat-card.products .stat-icon {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    }
+    
+    .stat-card.orders .stat-icon {
+        background: linear-gradient(135deg, var(--success-color), #2ecc71);
+    }
+    
+    .stat-card.users .stat-icon {
+        background: linear-gradient(135deg, var(--warning-color), #e67e22);
+    }
+    
+    .stat-card.reviews .stat-icon {
+        background: linear-gradient(135deg, var(--danger-color), #c0392b);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--primary-color);
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+    
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .quick-action {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        text-decoration: none;
+        color: var(--primary-color);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .quick-action:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        border-color: var(--secondary-color);
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+    
+    .quick-action i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+        color: var(--secondary-color);
+    }
+    
+    .app-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .app-list .module {
+        margin-bottom: 0;
+    }
+    
+    .model-list {
+        padding: 0;
+        margin: 0;
+    }
+    
+    .model-list li {
+        list-style: none;
+        border-bottom: 1px solid #e9ecef;
+        padding: 0;
+    }
+    
+    .model-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .model-list a {
+        display: block;
+        padding: 1rem 1.5rem;
+        color: var(--primary-color);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .model-list a:hover {
+        background: #f8f9fa;
+        color: var(--secondary-color);
+        padding-right: 2rem;
+    }
+    
+    .model-list a:before {
+        content: '\f0da';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        left: 1rem;
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .model-list a:hover:before {
+        opacity: 1;
+        left: 0.5rem;
+    }
+    
+    .addlink:after {
+        content: ' \f067';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        margin-right: 0.5rem;
+    }
+    
+    .changelink:after {
+        content: ' \f044';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        margin-right: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-stats">
+    <div class="stat-card products">
+        <div class="stat-icon">
+            <i class="fas fa-box"></i>
+        </div>
+        <div class="stat-value" id="products-count">-</div>
+        <p class="stat-label">المنتجات</p>
+    </div>
+    
+    <div class="stat-card orders">
+        <div class="stat-icon">
+            <i class="fas fa-shopping-cart"></i>
+        </div>
+        <div class="stat-value" id="orders-count">-</div>
+        <p class="stat-label">الطلبات</p>
+    </div>
+    
+    <div class="stat-card users">
+        <div class="stat-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-value" id="users-count">-</div>
+        <p class="stat-label">المستخدمون</p>
+    </div>
+    
+    <div class="stat-card reviews">
+        <div class="stat-icon">
+            <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-value" id="reviews-count">-</div>
+        <p class="stat-label">التقييمات</p>
+    </div>
+</div>
+
+<div class="quick-actions">
+    <a href="{% url 'admin:products_product_add' %}" class="quick-action">
+        <i class="fas fa-plus"></i>
+        إضافة منتج جديد
+    </a>
+    
+    <a href="{% url 'admin:orders_order_changelist' %}" class="quick-action">
+        <i class="fas fa-list"></i>
+        عرض الطلبات
+    </a>
+    
+    <a href="{% url 'admin:auth_user_changelist' %}" class="quick-action">
+        <i class="fas fa-users-cog"></i>
+        إدارة المستخدمين
+    </a>
+    
+    <a href="{% url 'dashboard:home' %}" class="quick-action">
+        <i class="fas fa-chart-bar"></i>
+        التقارير والإحصائيات
+    </a>
+</div>
+
+{% if app_list %}
+    <div class="app-list">
+        {% for app in app_list %}
+            <div class="module">
+                <h2>
+                    <i class="fas fa-{% if app.app_label == 'products' %}box{% elif app.app_label == 'orders' %}shopping-cart{% elif app.app_label == 'accounts' %}users{% elif app.app_label == 'reviews' %}star{% elif app.app_label == 'auth' %}shield-alt{% else %}cog{% endif %} me-2"></i>
+                    {{ app.name }}
+                </h2>
+                {% if app.models %}
+                    <ul class="model-list">
+                        {% for model in app.models %}
+                            <li>
+                                {% if model.admin_url %}
+                                    <a href="{{ model.admin_url }}">{{ model.name }}</a>
+                                {% else %}
+                                    {{ model.name }}
+                                {% endif %}
+                                
+                                {% if model.add_url %}
+                                    <a href="{{ model.add_url }}" class="addlink">إضافة</a>
+                                {% endif %}
+                                
+                                {% if model.admin_url %}
+                                    <a href="{{ model.admin_url }}" class="changelink">تغيير</a>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>لا توجد تطبيقات متاحة.</p>
+{% endif %}
+
+<script>
+// Load statistics
+document.addEventListener('DOMContentLoaded', function() {
+    // محاكاة تحميل الإحصائيات
+    setTimeout(() => {
+        document.getElementById('products-count').textContent = '{{ products_count|default:"0" }}';
+        document.getElementById('orders-count').textContent = '{{ orders_count|default:"0" }}';
+        document.getElementById('users-count').textContent = '{{ users_count|default:"0" }}';
+        document.getElementById('reviews-count').textContent = '{{ reviews_count|default:"0" }}';
+    }, 500);
+});
+</script>
+{% endblock %}

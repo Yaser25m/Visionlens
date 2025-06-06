@@ -1,0 +1,102 @@
+{% extends "admin/change_form.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+
+<style>
+/* إصلاح القوائم المنسدلة - إعادة تعيين كاملة للوضع الافتراضي */
+select {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    padding: 4px !important;
+    font-size: 12px !important;
+    color: black !important;
+    font-family: "Lucida Grande","DejaVu Sans",Verdana,sans-serif !important;
+    appearance: menulist !important;
+    -webkit-appearance: menulist !important;
+    -moz-appearance: menulist !important;
+    height: auto !important;
+    line-height: normal !important;
+}
+
+select:focus {
+    border-color: #5b9bd5 !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+select option {
+    background: white !important;
+    color: black !important;
+    padding: 2px !important;
+}
+
+/* إزالة أي تخصيصات قد تتداخل */
+.form-row select {
+    width: auto !important;
+    max-width: 300px !important;
+}
+
+/* تحسين عرض الحقول */
+.form-row {
+    margin-bottom: 15px !important;
+}
+
+.form-row label {
+    display: block !important;
+    margin-bottom: 5px !important;
+    font-weight: bold !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Fixing select fields...');
+    
+    // إزالة جميع التخصيصات من القوائم المنسدلة
+    const selects = document.querySelectorAll('select');
+    
+    selects.forEach(function(select) {
+        // إزالة جميع الأنماط المخصصة
+        select.removeAttribute('style');
+        select.style.cssText = '';
+        
+        // إزالة جميع الفئات المخصصة
+        select.className = '';
+        
+        // إعادة تعيين الخصائص الأساسية
+        select.style.background = 'white';
+        select.style.border = '1px solid #ccc';
+        select.style.padding = '4px';
+        select.style.fontSize = '12px';
+        select.style.color = 'black';
+        select.style.fontFamily = '"Lucida Grande","DejaVu Sans",Verdana,sans-serif';
+        
+        console.log('Fixed select:', select.name, 'Options:', select.options.length);
+        
+        // إضافة مستمع للتغيير
+        select.addEventListener('change', function() {
+            console.log('Select changed:', this.name, 'Value:', this.value, 'Text:', this.options[this.selectedIndex].text);
+        });
+    });
+    
+    // اختبار خاص للفئة والعلامة التجارية
+    const categorySelect = document.getElementById('id_category');
+    const brandSelect = document.getElementById('id_brand');
+    
+    if (categorySelect) {
+        console.log('Category select found with', categorySelect.options.length, 'options');
+        for (let i = 0; i < categorySelect.options.length; i++) {
+            console.log('  Category option', i, ':', categorySelect.options[i].value, categorySelect.options[i].text);
+        }
+    }
+    
+    if (brandSelect) {
+        console.log('Brand select found with', brandSelect.options.length, 'options');
+        for (let i = 0; i < brandSelect.options.length; i++) {
+            console.log('  Brand option', i, ':', brandSelect.options[i].value, brandSelect.options[i].text);
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}طلباتي - عدستي{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">الرئيسية</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'accounts:profile' %}">الملف الشخصي</a></li>
+            <li class="breadcrumb-item active">طلباتي</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>طلباتي</h2>
+        <a href="{% url 'products:list' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>طلب جديد
+        </a>
+    </div>
+
+    {% if orders %}
+        <div class="row">
+            {% for order in orders %}
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">طلب #{{ order.order_number }}</h6>
+                        <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% elif order.status == 'shipped' %}info{% else %}primary{% endif %}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">تاريخ الطلب:</small>
+                                <p class="mb-2">{{ order.created_at|date:"d/m/Y H:i" }}</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">المبلغ الإجمالي:</small>
+                                <p class="mb-2 fw-bold text-primary">{{ order.total_amount }} د.ع</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">حالة الدفع:</small>
+                                <p class="mb-2">
+                                    <span class="badge bg-{% if order.payment_status == 'paid' %}success{% elif order.payment_status == 'failed' %}danger{% else %}warning{% endif %}">
+                                        {{ order.get_payment_status_display }}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">عدد المنتجات:</small>
+                                <p class="mb-2">{{ order.items.count }} منتج</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <small class="text-muted">عنوان الشحن:</small>
+                            <p class="mb-0">{{ order.shipping_address|truncatewords:10 }}</p>
+                        </div>
+
+                        <!-- Order Items Preview -->
+                        <div class="mb-3">
+                            <small class="text-muted">المنتجات:</small>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                {% for item in order.items.all|slice:":3" %}
+                                    <span class="badge bg-light text-dark">{{ item.product.name|truncatewords:2 }}</span>
+                                {% endfor %}
+                                {% if order.items.count > 3 %}
+                                    <span class="badge bg-secondary">+{{ order.items.count|add:"-3" }} أخرى</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'orders:detail' order.pk %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>عرض التفاصيل
+                            </a>
+                            
+                            {% if order.status in 'pending,confirmed' %}
+                                <form method="post" action="{% url 'orders:cancel' order.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('هل أنت متأكد من إلغاء هذا الطلب؟')">
+                                        <i class="fas fa-times me-1"></i>إلغاء
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            {% if order.status == 'delivered' %}
+                                <a href="#" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-star me-1"></i>تقييم
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="صفحات الطلبات" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">السابق</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">التالي</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+    {% else %}
+        <!-- No Orders -->
+        <div class="text-center py-5">
+            <i class="fas fa-shopping-bag fa-5x text-muted mb-4"></i>
+            <h3>لا توجد طلبات</h3>
+            <p class="text-muted mb-4">لم تقم بإجراء أي طلبات بعد</p>
+            <a href="{% url 'products:list' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-shopping-bag me-2"></i>ابدأ التسوق الآن
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,284 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}عدستي - متجر العدسات اللاصقة الأول في المملكة{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="fade-in-up">مرحباً بك في عدستي</h1>
+                <p class="fade-in-up">متجرك الموثوق للعدسات اللاصقة الطبية والتجميلية. نوفر أفضل الماركات العالمية بأسعار منافسة وجودة عالية.</p>
+                <div class="fade-in-up">
+                    <a href="{% url 'products:list' %}" class="btn btn-light btn-lg me-3">
+                        <i class="fas fa-shopping-bag me-2"></i>تسوق الآن
+                    </a>
+                    <a href="#categories" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-eye me-2"></i>استكشف الفئات
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <img src="{% static 'images/logo.png' %}" alt="عدسات لاصقة" class="img-fluid rounded">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-shipping-fast"></i>
+                    </div>
+                    <h5>شحن سريع</h5>
+                    <p>توصيل مجاني للطلبات أكثر من 50,000 د.ع</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h5>ضمان الجودة</h5>
+                    <p>منتجات أصلية 100% من أفضل الماركات</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h5>دعم 24/7</h5>
+                    <p>خدمة عملاء متميزة على مدار الساعة</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-undo-alt"></i>
+                    </div>
+                    <h5>إرجاع مجاني</h5>
+                    <p>إمكانية الإرجاع خلال 14 يوم</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section id="categories" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">تسوق حسب الفئة</h2>
+            <p class="text-muted">اختر من مجموعة واسعة من العدسات اللاصقة</p>
+        </div>
+        
+        <div class="row g-4">
+            {% for category in categories %}
+            <div class="col-md-4 col-lg-2">
+                <a href="{% url 'products:list' %}?category={{ category.id }}" class="category-card d-block">
+                    {% if category.image %}
+                        <img src="{{ category.image.url }}" alt="{{ category.name }}" class="img-fluid mb-3" style="height: 80px; object-fit: cover;">
+                    {% else %}
+                        <div class="category-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                    {% endif %}
+                    <h6 class="fw-bold">{{ category.name }}</h6>
+                    <p class="text-muted small">{{ category.description|truncatewords:5 }}</p>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">المنتجات المميزة</h2>
+            <p class="text-muted">أفضل العدسات اللاصقة المختارة خصيصاً لك</p>
+        </div>
+        
+        <div class="row g-4">
+            {% for product in featured_products %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card product-card h-100">
+                    {% if product.discount_percentage %}
+                        <div class="discount-badge">-{{ product.discount_percentage }}%</div>
+                    {% endif %}
+                    
+                    {% if product.images.first %}
+                        <img src="{{ product.images.first.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                    {% else %}
+                        <img src="{% static 'images/no-image.svg' %}" class="card-img-top" alt="{{ product.name }}">
+                    {% endif %}
+                    
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">{{ product.name }}</h6>
+                        <p class="card-text text-muted small flex-grow-1">{{ product.description|truncatewords:10 }}</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if product.discount_price %}
+                                    <span class="product-price">{{ product.discount_price }} د.ع</span>
+                                    <span class="product-price-old">{{ product.price }} د.ع</span>
+                                {% else %}
+                                    <span class="product-price">{{ product.price }} د.ع</span>
+                                {% endif %}
+                            </div>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'products:detail' product.pk %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if product.is_in_stock %}
+                                    <form class="d-inline add-to-cart-form" action="{% url 'orders:add_to_cart' %}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-cart-plus"></i>
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <button class="btn btn-secondary btn-sm" disabled>
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'products:list' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-th-large me-2"></i>عرض جميع المنتجات
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Latest Products -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">أحدث المنتجات</h2>
+            <p class="text-muted">آخر الإضافات إلى مجموعتنا</p>
+        </div>
+        
+        <div class="row g-4">
+            {% for product in latest_products %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card product-card h-100">
+                    {% if product.images.first %}
+                        <img src="{{ product.images.first.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                    {% else %}
+                        <img src="{% static 'images/no-image.svg' %}" class="card-img-top" alt="{{ product.name }}">
+                    {% endif %}
+                    
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">{{ product.name }}</h6>
+                        <p class="card-text text-muted small flex-grow-1">{{ product.description|truncatewords:10 }}</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="product-price">{{ product.get_price }} د.ع</span>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'products:detail' product.pk %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if product.is_in_stock %}
+                                    <form class="d-inline add-to-cart-form" action="{% url 'orders:add_to_cart' %}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-cart-plus"></i>
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <button class="btn btn-secondary btn-sm" disabled>
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Brands Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">العلامات التجارية</h2>
+            <p class="text-muted">نتعامل مع أفضل الماركات العالمية</p>
+        </div>
+        
+        <div class="row g-4">
+            {% for brand in brands %}
+            <div class="col-6 col-md-3 col-lg-2">
+                <div class="text-center p-3 bg-white rounded shadow-sm">
+                    {% if brand.logo %}
+                        <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="img-fluid" style="max-height: 60px;">
+                    {% else %}
+                        <h6 class="fw-bold">{{ brand.name }}</h6>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Reviews Section -->
+{% if latest_reviews %}
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">آراء العملاء</h2>
+            <p class="text-muted">ماذا يقول عملاؤنا عن منتجاتنا</p>
+        </div>
+        
+        <div class="row g-4">
+            {% for review in latest_reviews %}
+            <div class="col-md-6 col-lg-4">
+                <div class="review-card">
+                    <div class="review-rating mb-2">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= review.rating %}
+                                <i class="fas fa-star"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <h6 class="fw-bold">{{ review.title }}</h6>
+                    <p class="text-muted">{{ review.comment|truncatewords:20 }}</p>
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="review-author">{{ review.user.first_name|default:review.user.username }}</div>
+                            <small class="text-muted">{{ review.product.name }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

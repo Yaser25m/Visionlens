@@ -1,0 +1,274 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}إدارة الطلبات - عدستي{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title">إدارة الطلبات</h1>
+            <p class="page-subtitle">متابعة وإدارة طلبات العملاء</p>
+        </div>
+        <div>
+            <button class="btn btn-success" onclick="exportOrders()">
+                <i class="fas fa-download me-2"></i>تصدير البيانات
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">البحث</label>
+                    <input type="text" class="form-control" name="search" value="{{ search_query }}" 
+                           placeholder="رقم الطلب أو اسم العميل">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">الحالة</label>
+                    <select class="form-select" name="status">
+                        <option value="">جميع الحالات</option>
+                        {% for status_code, status_name in order_statuses %}
+                        <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
+                            {{ status_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">التاريخ</label>
+                    <select class="form-select" name="date">
+                        <option value="">جميع التواريخ</option>
+                        <option value="today" {% if date_filter == 'today' %}selected{% endif %}>اليوم</option>
+                        <option value="week" {% if date_filter == 'week' %}selected{% endif %}>هذا الأسبوع</option>
+                        <option value="month" {% if date_filter == 'month' %}selected{% endif %}>هذا الشهر</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>بحث
+                        </button>
+                        <a href="{% url 'dashboard:orders' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>مسح
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Orders Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="table-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-shopping-cart me-2"></i>
+                    الطلبات ({{ orders.paginator.count }} طلب)
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>رقم الطلب</th>
+                                <th>العميل</th>
+                                <th>المبلغ الإجمالي</th>
+                                <th>الحالة</th>
+                                <th>طريقة الدفع</th>
+                                <th>تاريخ الطلب</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td>
+                                    <strong>#{{ order.id }}</strong>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ order.user.get_full_name|default:order.user.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ order.user.email }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong>{{ order.total_amount|floatformat:0 }} د.ع</strong>
+                                    {% if order.shipping_cost > 0 %}
+                                        <br>
+                                        <small class="text-muted">شحن: {{ order.shipping_cost|floatformat:0 }} د.ع</small>
+                                    {% else %}
+                                        <br>
+                                        <small class="text-success">شحن مجاني</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if order.status == 'pending' %}
+                                        <span class="badge bg-warning">في الانتظار</span>
+                                    {% elif order.status == 'processing' %}
+                                        <span class="badge bg-info">قيد المعالجة</span>
+                                    {% elif order.status == 'shipped' %}
+                                        <span class="badge bg-primary">تم الشحن</span>
+                                    {% elif order.status == 'delivered' %}
+                                        <span class="badge bg-success">تم التسليم</span>
+                                    {% elif order.status == 'cancelled' %}
+                                        <span class="badge bg-danger">ملغي</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if order.payment_method == 'cash_on_delivery' %}
+                                        <i class="fas fa-money-bill-wave text-success me-1"></i>
+                                        الدفع عند الاستلام
+                                    {% elif order.payment_method == 'credit_card' %}
+                                        <i class="fas fa-credit-card text-primary me-1"></i>
+                                        بطاقة ائتمان
+                                    {% else %}
+                                        {{ order.get_payment_method_display }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ order.created_at|date:"Y/m/d H:i" }}
+                                    <br>
+                                    <small class="text-muted">{{ order.created_at|timesince }} مضت</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                onclick="viewOrderDetails({{ order.id }})" title="عرض التفاصيل">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-primary dropdown-toggle" 
+                                                    data-bs-toggle="dropdown" title="تغيير الحالة">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" onclick="updateOrderStatus({{ order.id }}, 'pending')">في الانتظار</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="updateOrderStatus({{ order.id }}, 'processing')">قيد المعالجة</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="updateOrderStatus({{ order.id }}, 'shipped')">تم الشحن</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="updateOrderStatus({{ order.id }}, 'delivered')">تم التسليم</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#" onclick="updateOrderStatus({{ order.id }}, 'cancelled')">إلغاء الطلب</a></li>
+                                            </ul>
+                                        </div>
+                                        <a href="{% url 'admin:orders_order_change' order.id %}" 
+                                           class="btn btn-sm btn-success" title="تعديل متقدم">
+                                            <i class="fas fa-cogs"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-5">
+                                    <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                                    <br>
+                                    لا توجد طلبات تطابق معايير البحث
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            {% if orders.has_other_pages %}
+            <div class="card-footer">
+                <nav aria-label="تصفح الطلبات">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if orders.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}">الأولى</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ orders.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}">السابقة</a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">
+                                صفحة {{ orders.number }} من {{ orders.paginator.num_pages }}
+                            </span>
+                        </li>
+                        
+                        {% if orders.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ orders.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}">التالية</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ orders.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}">الأخيرة</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تفاصيل الطلب</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="orderDetailsContent">
+                <!-- سيتم تحميل المحتوى هنا -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewOrderDetails(orderId) {
+    // هنا يمكن إضافة AJAX لتحميل تفاصيل الطلب
+    const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+    document.getElementById('orderDetailsContent').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">جاري التحميل...</span>
+            </div>
+            <p class="mt-2">جاري تحميل تفاصيل الطلب...</p>
+        </div>
+    `;
+    modal.show();
+    
+    // محاكاة تحميل البيانات
+    setTimeout(() => {
+        document.getElementById('orderDetailsContent').innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                لعرض تفاصيل الطلب الكاملة، يرجى استخدام 
+                <a href="/admin/orders/order/${orderId}/change/" target="_blank">الإدارة المتقدمة</a>
+            </div>
+        `;
+    }, 1000);
+}
+
+function updateOrderStatus(orderId, newStatus) {
+    if (confirm('هل أنت متأكد من تغيير حالة الطلب؟')) {
+        // هنا يمكن إضافة AJAX لتحديث حالة الطلب
+        alert('سيتم تنفيذ هذه الوظيفة قريباً');
+    }
+}
+
+function exportOrders() {
+    alert('سيتم تنفيذ وظيفة التصدير قريباً');
+}
+</script>
+{% endblock %}

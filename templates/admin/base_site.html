@@ -1,0 +1,480 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | لوحة التحكم - عدستي{% endblock %}
+
+{% block branding %}
+<div class="admin-branding">
+    <h1 id="site-name">
+        <a href="{% url 'admin:index' %}">
+            <i class="fas fa-eye me-2"></i>عدستي
+        </a>
+    </h1>
+    <p class="admin-subtitle">لوحة الإدارة المتقدمة</p>
+</div>
+{% endblock %}
+
+{% block nav-global %}
+<div class="admin-nav-global">
+    <a href="{% url 'dashboard:home' %}" class="admin-nav-link">
+        <i class="fas fa-tachometer-alt me-2"></i>لوحة التحكم الرئيسية
+    </a>
+    <a href="{% url 'home' %}" target="_blank" class="admin-nav-link">
+        <i class="fas fa-external-link-alt me-2"></i>عرض الموقع
+    </a>
+    {% if user.is_authenticated %}
+        <a href="{% url 'accounts:logout' %}" class="admin-nav-link">
+            <i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج
+        </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<!-- Font Awesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<!-- حل شامل لمشكلة النماذج المضمنة -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 تشغيل الحل الشامل للنماذج المضمنة...');
+
+    function fixAllInlineFormsets() {
+        // البحث عن جميع النماذج المضمنة في الصفحة
+        const inlineGroups = document.querySelectorAll('.inline-group, [id$="-group"], .tabular, .stacked');
+
+        console.log('🔍 تم العثور على', inlineGroups.length, 'مجموعة نماذج مضمنة');
+
+        inlineGroups.forEach(function(group, index) {
+            let prefix = 'items'; // افتراضي
+
+            // محاولة استخراج البادئة من معرف المجموعة
+            if (group.id) {
+                if (group.id.includes('-group')) {
+                    prefix = group.id.replace('-group', '');
+                } else if (group.id.includes('_set')) {
+                    prefix = group.id.replace('_set-group', '');
+                }
+            }
+
+            // البحث عن بادئات شائعة في النماذج
+            const commonPrefixes = ['items', 'images', 'orderitem', 'productimage', 'review', 'address'];
+            const forms = group.querySelectorAll('input[name*="-"]');
+
+            if (forms.length > 0) {
+                const firstFormName = forms[0].name;
+                for (let commonPrefix of commonPrefixes) {
+                    if (firstFormName.includes(commonPrefix + '-')) {
+                        prefix = commonPrefix;
+                        break;
+                    }
+                }
+            }
+
+            console.log('🔧 معالجة المجموعة', index + 1, 'بالبادئة:', prefix);
+
+            // إنشاء حقول الإدارة المطلوبة
+            const managementFields = [
+                { name: prefix + '-TOTAL_FORMS', value: '0' },
+                { name: prefix + '-INITIAL_FORMS', value: '0' },
+                { name: prefix + '-MIN_NUM_FORMS', value: '0' },
+                { name: prefix + '-MAX_NUM_FORMS', value: '1000' }
+            ];
+
+            managementFields.forEach(function(field) {
+                let input = document.getElementById('id_' + field.name);
+
+                if (!input) {
+                    console.log('➕ إنشاء حقل مفقود:', field.name);
+
+                    input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = field.name;
+                    input.id = 'id_' + field.name;
+                    input.value = field.value;
+
+                    // إضافة الحقل إلى النموذج
+                    const form = document.querySelector('form');
+                    if (form) {
+                        form.appendChild(input);
+                    }
+                } else {
+                    console.log('✅ الحقل موجود:', field.name, 'القيمة:', input.value);
+                }
+            });
+
+            // تحديث عدد النماذج الحالية
+            const existingRows = group.querySelectorAll('.form-row:not(.empty-form), tr:not(.empty-form)').length;
+            const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+            if (totalFormsInput && existingRows > 0) {
+                totalFormsInput.value = Math.max(1, existingRows);
+                console.log('🔄 تحديث TOTAL_FORMS إلى:', totalFormsInput.value);
+            }
+        });
+
+        console.log('✅ تم الانتهاء من إصلاح جميع النماذج المضمنة');
+    }
+
+    // تشغيل الإصلاح عند تحميل الصفحة
+    setTimeout(fixAllInlineFormsets, 500);
+
+    // إعادة تشغيل الإصلاح عند إضافة صفوف جديدة
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-row') ||
+            e.target.textContent.includes('إضافة') ||
+            e.target.textContent.includes('Add')) {
+            console.log('🔄 إعادة تشغيل الإصلاح بعد إضافة صف جديد');
+            setTimeout(fixAllInlineFormsets, 200);
+        }
+    });
+
+    // إصلاح إضافي عند إرسال النموذج
+    const forms = document.querySelectorAll('form');
+    forms.forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            console.log('📤 إصلاح نهائي قبل إرسال النموذج');
+            fixAllInlineFormsets();
+        });
+    });
+});
+</script>
+
+<style>
+    :root {
+        --primary-color: #2c3e50;
+        --secondary-color: #3498db;
+        --success-color: #27ae60;
+        --warning-color: #f39c12;
+        --danger-color: #e74c3c;
+        --dark-color: #34495e;
+        --light-color: #ecf0f1;
+    }
+    
+    * {
+        font-family: 'Cairo', sans-serif !important;
+    }
+    
+    /* Header Styling */
+    #header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--dark-color) 100%) !important;
+        color: white !important;
+        border-bottom: none !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    }
+    
+    .admin-branding h1 {
+        margin: 0 !important;
+        font-weight: 700 !important;
+    }
+    
+    .admin-branding h1 a {
+        color: white !important;
+        text-decoration: none !important;
+        font-size: 1.5rem !important;
+    }
+    
+    .admin-subtitle {
+        color: rgba(255,255,255,0.8) !important;
+        font-size: 0.9rem !important;
+        margin: 0 !important;
+        margin-top: 0.25rem !important;
+    }
+    
+    /* Navigation */
+    .admin-nav-global {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .admin-nav-link {
+        color: rgba(255,255,255,0.9) !important;
+        text-decoration: none !important;
+        padding: 0.5rem 1rem !important;
+        border-radius: 6px !important;
+        transition: all 0.3s ease !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .admin-nav-link:hover {
+        background-color: rgba(255,255,255,0.1) !important;
+        color: white !important;
+    }
+
+    /* إصلاح القوائم المنسدلة */
+    select {
+        background: white !important;
+        border: 1px solid #ccc !important;
+        padding: 4px !important;
+        font-size: 12px !important;
+        color: black !important;
+        font-family: "Lucida Grande","DejaVu Sans",Verdana,sans-serif !important;
+        appearance: menulist !important;
+        -webkit-appearance: menulist !important;
+        -moz-appearance: menulist !important;
+        height: auto !important;
+        line-height: normal !important;
+    }
+
+    select:focus {
+        border-color: #5b9bd5 !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    select option {
+        background: white !important;
+        color: black !important;
+        padding: 2px !important;
+    }
+
+    /* إزالة أي تخصيصات قد تتداخل */
+    .form-row select {
+        width: auto !important;
+        max-width: 300px !important;
+    }
+    
+    /* Breadcrumbs */
+    .breadcrumbs {
+        background: white !important;
+        border: none !important;
+        padding: 1rem 2rem !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+    }
+    
+    .breadcrumbs a {
+        color: var(--secondary-color) !important;
+        text-decoration: none !important;
+    }
+    
+    .breadcrumbs a:hover {
+        text-decoration: underline !important;
+    }
+    
+    /* Content Area */
+    #content {
+        background: #f8f9fa !important;
+        padding: 2rem !important;
+    }
+    
+    /* Module styling */
+    .module {
+        background: white !important;
+        border: none !important;
+        border-radius: 15px !important;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08) !important;
+        margin-bottom: 2rem !important;
+        overflow: hidden !important;
+    }
+    
+    .module h2 {
+        background: linear-gradient(135deg, var(--primary-color), var(--dark-color)) !important;
+        color: white !important;
+        padding: 1.25rem 1.5rem !important;
+        margin: 0 !important;
+        font-weight: 600 !important;
+        border: none !important;
+    }
+    
+    .module h3 {
+        background: linear-gradient(135deg, var(--secondary-color), #5dade2) !important;
+        color: white !important;
+        padding: 1rem 1.5rem !important;
+        margin: 0 !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Tables */
+    #result_list {
+        border: none !important;
+        border-radius: 0 !important;
+    }
+    
+    #result_list thead th {
+        background: #f8f9fa !important;
+        color: var(--primary-color) !important;
+        font-weight: 600 !important;
+        border: none !important;
+        padding: 1rem !important;
+    }
+    
+    #result_list tbody tr {
+        border-bottom: 1px solid #e9ecef !important;
+    }
+    
+    #result_list tbody tr:hover {
+        background: #f8f9fa !important;
+    }
+    
+    #result_list tbody td {
+        padding: 1rem !important;
+        border: none !important;
+    }
+    
+    /* Buttons */
+    .button, input[type=submit], input[type=button], .submit-row input, button {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 0.75rem 1.5rem !important;
+        color: white !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-block !important;
+        cursor: pointer !important;
+    }
+    
+    .button:hover, input[type=submit]:hover, input[type=button]:hover, .submit-row input:hover, button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4) !important;
+        color: white !important;
+    }
+    
+    .button.default, .default {
+        background: linear-gradient(135deg, var(--success-color), #2ecc71) !important;
+    }
+    
+    .deletelink {
+        background: linear-gradient(135deg, var(--danger-color), #c0392b) !important;
+    }
+    
+    /* Forms */
+    .form-row {
+        padding: 1rem 0 !important;
+        border-bottom: 1px solid #e9ecef !important;
+    }
+
+    .form-row:last-child {
+        border-bottom: none !important;
+    }
+
+    .form-row label {
+        font-weight: 600 !important;
+        color: var(--primary-color) !important;
+    }
+
+    input[type="text"], input[type="password"], input[type="email"], input[type="url"],
+    input[type="number"], input[type="tel"], textarea, select {
+        border: 2px solid #e9ecef !important;
+        border-radius: 8px !important;
+        padding: 0.75rem !important;
+        transition: all 0.3s ease !important;
+        background-color: white !important;
+        color: #333 !important;
+        font-family: 'Cairo', sans-serif !important;
+    }
+
+    input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus,
+    input[type="url"]:focus, input[type="number"]:focus, input[type="tel"]:focus,
+    textarea:focus, select:focus {
+        border-color: var(--secondary-color) !important;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1) !important;
+        outline: none !important;
+    }
+
+    /* إصلاح خاص للقوائم المنسدلة */
+    select {
+        appearance: menulist !important;
+        -webkit-appearance: menulist !important;
+        -moz-appearance: menulist !important;
+        background-image: none !important;
+        cursor: pointer !important;
+    }
+
+    select option {
+        background-color: white !important;
+        color: #333 !important;
+        padding: 0.5rem !important;
+    }
+
+    select option:checked {
+        background-color: var(--secondary-color) !important;
+        color: white !important;
+    }
+    
+    /* Sidebar */
+    #content-main {
+        float: none !important;
+        width: 100% !important;
+    }
+    
+    #content-related {
+        float: none !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-top: 2rem !important;
+    }
+    
+    /* Messages */
+    .messagelist {
+        margin: 0 0 2rem 0 !important;
+        padding: 0 !important;
+    }
+    
+    .messagelist li {
+        background: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 1rem 1.5rem !important;
+        margin-bottom: 1rem !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+        border-left: 4px solid var(--success-color) !important;
+    }
+    
+    .messagelist .error {
+        border-left-color: var(--danger-color) !important;
+    }
+    
+    .messagelist .warning {
+        border-left-color: var(--warning-color) !important;
+    }
+    
+    /* Dashboard specific */
+    .dashboard .module table {
+        width: 100% !important;
+    }
+    
+    .dashboard .module table th {
+        background: #f8f9fa !important;
+        padding: 1rem !important;
+        font-weight: 600 !important;
+        color: var(--primary-color) !important;
+    }
+    
+    .dashboard .module table td {
+        padding: 1rem !important;
+        border-bottom: 1px solid #e9ecef !important;
+    }
+    
+    .dashboard .module table tr:hover {
+        background: #f8f9fa !important;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .admin-nav-global {
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+        }
+        
+        #content {
+            padding: 1rem !important;
+        }
+        
+        .module h2, .module h3 {
+            padding: 1rem !important;
+            font-size: 1rem !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block footer %}
+<div id="footer" style="background: var(--primary-color); color: white; text-align: center; padding: 1rem; margin-top: 2rem;">
+    <p style="margin: 0;">© 2025 عدستي - جميع الحقوق محفوظة</p>
+</div>
+{% endblock %}
